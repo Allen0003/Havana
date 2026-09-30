@@ -1,0 +1,5 @@
+
+
+後端初始化：建立 Java 17 + Spring Boot 3 專案，引入 Spring Web, Spring WebSocket, Lombok。
+
+前端初始化：建立 Angular 17+ 專案，安裝 @stomp/stompjs 與 sockjs-client。

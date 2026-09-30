@@ -1,0 +1,10 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: havana-domino
+
+logging:
+  level:
+    com.havana: DEBUG
