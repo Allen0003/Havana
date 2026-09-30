@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global Havana styles */
+:root {
+  --color-havana-green: #1a6b3c;
+  --color-havana-gold:  #c9a84c;
+  --color-havana-cream: #fdf5e4;
+  --color-havana-dark:  #1a1a2e;
+}
+
+body {
+  @apply bg-havana-dark text-havana-cream;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
