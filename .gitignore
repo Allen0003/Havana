@@ -1,0 +1,46 @@
+# ─── macOS ───────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
+
+# ─── IDEs ────────────────────────────────────────────────────────────────────
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.sublime-workspace
+*.sublime-project
+.history/
+
+# ─── Backend (Maven / Java) ───────────────────────────────────────────────────
+backend/target/
+backend/*.log
+backend/application-local.yml
+backend/application-secret.yml
+
+# ─── Frontend (Node / Angular) ───────────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/cache/
+frontend/npm-debug.log*
+frontend/yarn-error.log*
+frontend/.sass-cache/
+frontend/coverage/
+
+# ─── Secrets & environment ────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
