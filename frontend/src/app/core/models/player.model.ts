@@ -6,4 +6,5 @@ export interface Player {
   name: string;
   handCount: number;
   connected: boolean;
+  ai: boolean;
 }

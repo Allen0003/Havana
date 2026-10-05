@@ -2,6 +2,7 @@ package com.havana.domino.controller;
 
 import com.havana.domino.dto.*;
 import com.havana.domino.model.GameRoom;
+import com.havana.domino.model.Player;
 import com.havana.domino.service.MatchmakingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,26 @@ import org.springframework.web.bind.annotation.*;
 public class RoomController {
 
     private final MatchmakingService matchmakingService;
+
+    /**
+     * 建立單人對戰房間（1 人 + 3 AI），立即開始遊戲。
+     * 回傳 201 Created 與 {@link CreateRoomResponse}。
+     */
+    @PostMapping("/solo")
+    public ResponseEntity<CreateRoomResponse> createSoloRoom(
+            @Valid @RequestBody CreateRoomRequest request) {
+
+        GameRoom room = matchmakingService.createSoloRoom(request.hostName());
+        String hostPlayerId = room.getPlayers().stream()
+                .filter(p -> !p.isAi())
+                .findFirst()
+                .map(p -> p.getId())
+                .orElseThrow();
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(new CreateRoomResponse(room.getRoomId(), room.getStatus(), hostPlayerId));
+    }
 
     /**
      * 建立新遊戲房間。

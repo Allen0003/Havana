@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -26,6 +27,48 @@ public class MatchmakingServiceImpl implements MatchmakingService {
 
     private final GameRoomRepository roomRepository;
     private final GameEngineService  gameEngine;
+
+    // ── createSoloRoom() ─────────────────────────────────────────────────────
+
+    @Override
+    public GameRoom createSoloRoom(String hostName) {
+        String roomId  = UUID.randomUUID().toString();
+        String hostId  = UUID.randomUUID().toString();
+
+        // 人類玩家（房主）
+        Player host = Player.builder()
+                .id(hostId)
+                .name(hostName)
+                .ai(false)
+                .build();
+
+        // 3 個 AI 玩家
+        Player ai1 = Player.builder()
+                .id(UUID.randomUUID().toString())
+                .name("AI-Havana")
+                .ai(true)
+                .build();
+        Player ai2 = Player.builder()
+                .id(UUID.randomUUID().toString())
+                .name("AI-Cuba")
+                .ai(true)
+                .build();
+        Player ai3 = Player.builder()
+                .id(UUID.randomUUID().toString())
+                .name("AI-Domino")
+                .ai(true)
+                .build();
+
+        GameRoom room = GameRoom.builder()
+                .roomId(roomId)
+                .players(new ArrayList<>(List.of(host, ai1, ai2, ai3)))
+                .status(GameStatus.WAITING)
+                .build();
+
+        // 直接 initGame（不需等待加入流程）
+        gameEngine.initGame(room);
+        return roomRepository.save(room);
+    }
 
     // ── createRoom() ─────────────────────────────────────────────────────────
 

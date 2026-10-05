@@ -28,6 +28,14 @@ public interface MatchmakingService {
     GameRoom joinRoom(String roomId, String playerName);
 
     /**
+     * 建立單人對戰房間（1 人類 + 3 AI 玩家），立即初始化遊戲。
+     *
+     * @param hostName 玩家（人類）的顯示名稱
+     * @return 初始化完成的 GameRoom（status = IN_PROGRESS）
+     */
+    GameRoom createSoloRoom(String hostName);
+
+    /**
      * 取得房間狀態；若不存在拋出 {@link com.havana.domino.exception.RoomNotFoundException}。
      */
     GameRoom getRoom(String roomId);

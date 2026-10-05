@@ -28,6 +28,10 @@ public class Player {
     @Builder.Default
     private boolean connected = true;
 
+    /** 是否為 AI 玩家（Bot） */
+    @Builder.Default
+    private boolean ai = false;
+
     /** 取得手牌中剩餘點數總和（用於死局計分） */
     public int handPipTotal() {
         return hand.stream().mapToInt(Tile::totalPips).sum();

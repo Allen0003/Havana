@@ -14,14 +14,15 @@ interface CreateRoomResponse {
 interface JoinRoomResponse {
   success: boolean;
   playerId: string;
-  players: { id: string; name: string; handCount: number; connected: boolean }[];
+  players: { id: string; name: string; handCount: number; connected: boolean; ai: boolean }[];
 }
 
 /**
  * Lobby Component
  *
  * 大廳頁面，讓玩家可以：
- * - 輸入名稱並建立新房間（取得 roomId 後可分享給其他玩家）
+ * - 一鍵開啟單人對戰（VS AI，立即開始）
+ * - 輸入名稱並建立多人房間（取得 roomId 後可分享）
  * - 輸入 roomId 並以玩家名稱加入現有房間
  * 成功後導向 /game?roomId=...&playerId=...
  */
@@ -37,6 +38,39 @@ interface JoinRoomResponse {
         <h1 class="text-3xl font-bold text-white">Havana</h1>
         <p class="text-slate-400 text-sm mt-1">Cuban Dominoes — 4 Players</p>
       </header>
+
+      <!-- VS AI banner：快速入口 -->
+      <div class="solo-banner">
+        <div class="flex flex-col gap-1 flex-1">
+          <span class="text-white font-bold text-lg">🤖 Play vs AI</span>
+          <span class="text-slate-400 text-sm">
+            Practice against 3 AI opponents — starts instantly!
+          </span>
+        </div>
+        <div class="flex flex-col gap-2 items-stretch sm:items-end">
+          <input
+            class="input w-full sm:w-44"
+            type="text"
+            placeholder="Your name"
+            maxlength="20"
+            [(ngModel)]="soloName"
+            (keydown.enter)="onSolo()"
+          />
+          <button
+            class="btn-solo"
+            (click)="onSolo()"
+            [disabled]="loading() || !soloName.trim()"
+          >
+            @if (loading() && activeAction() === 'solo') {
+              <span class="spinner"></span> Starting...
+            } @else {
+              ▶ Start Game
+            }
+          </button>
+        </div>
+      </div>
+
+      <div class="divider-text">— or play with friends —</div>
 
       <div class="cards-grid">
 
@@ -145,12 +179,28 @@ interface JoinRoomResponse {
   `,
   styles: [`
     .lobby-page {
-      @apply min-h-screen bg-slate-900 flex flex-col items-center
-             px-4 py-10 gap-8;
+      @apply min-h-screen bg-slate-900 flex flex-col items-center px-4 py-10 gap-8;
     }
 
     .lobby-header {
       @apply flex flex-col items-center gap-1;
+    }
+
+    .solo-banner {
+      @apply flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4
+             bg-gradient-to-r from-purple-900 to-slate-800
+             border border-purple-700 rounded-2xl p-5
+             w-full max-w-2xl;
+    }
+
+    .btn-solo {
+      @apply bg-purple-600 hover:bg-purple-500 disabled:bg-slate-600 disabled:cursor-not-allowed
+             text-white font-bold px-5 py-2 rounded-xl
+             transition-colors flex items-center justify-center gap-2 whitespace-nowrap;
+    }
+
+    .divider-text {
+      @apply text-slate-500 text-sm;
     }
 
     .cards-grid {
@@ -196,8 +246,7 @@ interface JoinRoomResponse {
     }
 
     .btn-copy {
-      @apply bg-slate-600 hover:bg-slate-500 text-white text-xs
-             px-2 py-1 rounded transition-colors;
+      @apply bg-slate-600 hover:bg-slate-500 text-white text-xs px-2 py-1 rounded transition-colors;
     }
 
     .error-box {
@@ -219,17 +268,43 @@ export class LobbyComponent {
   private http = inject(HttpClient);
   private router = inject(Router);
 
+  soloName = '';
   createName = '';
   joinName = '';
   joinRoomId = '';
 
   loading = signal(false);
-  activeAction = signal<'create' | 'join' | null>(null);
+  activeAction = signal<'solo' | 'create' | 'join' | null>(null);
   errorMsg = signal<string | null>(null);
   createdRoomId = signal<string | null>(null);
   copied = signal(false);
 
-  /** 建立房間 */
+  /** 單人 VS AI 對戰 */
+  onSolo(): void {
+    const name = this.soloName.trim();
+    if (!name || this.loading()) return;
+
+    this.loading.set(true);
+    this.activeAction.set('solo');
+    this.errorMsg.set(null);
+
+    this.http.post<CreateRoomResponse>(
+      `${environment.apiBaseUrl}/rooms/solo`, { hostName: name }
+    ).subscribe({
+      next: res => {
+        this.loading.set(false);
+        this.router.navigate(['/game'], {
+          queryParams: { roomId: res.roomId, playerId: res.hostPlayerId },
+        });
+      },
+      error: err => {
+        this.loading.set(false);
+        this.errorMsg.set(err.error?.message ?? 'Failed to start solo game. Please try again.');
+      },
+    });
+  }
+
+  /** 建立多人房間 */
   onCreate(): void {
     const name = this.createName.trim();
     if (!name || this.loading()) return;
@@ -238,24 +313,24 @@ export class LobbyComponent {
     this.activeAction.set('create');
     this.errorMsg.set(null);
 
-    this.http.post<CreateRoomResponse>(`${environment.apiBaseUrl}/rooms`, { hostName: name })
-      .subscribe({
-        next: res => {
-          this.loading.set(false);
-          this.createdRoomId.set(res.roomId);
-          // 建立房間後直接進入遊戲
-          this.router.navigate(['/game'], {
-            queryParams: { roomId: res.roomId, playerId: res.hostPlayerId },
-          });
-        },
-        error: err => {
-          this.loading.set(false);
-          this.errorMsg.set(err.error?.message ?? 'Failed to create room. Please try again.');
-        },
-      });
+    this.http.post<CreateRoomResponse>(
+      `${environment.apiBaseUrl}/rooms`, { hostName: name }
+    ).subscribe({
+      next: res => {
+        this.loading.set(false);
+        this.createdRoomId.set(res.roomId);
+        this.router.navigate(['/game'], {
+          queryParams: { roomId: res.roomId, playerId: res.hostPlayerId },
+        });
+      },
+      error: err => {
+        this.loading.set(false);
+        this.errorMsg.set(err.error?.message ?? 'Failed to create room. Please try again.');
+      },
+    });
   }
 
-  /** 加入房間 */
+  /** 加入現有房間 */
   onJoin(): void {
     const name = this.joinName.trim();
     const rid  = this.joinRoomId.trim();
@@ -265,26 +340,27 @@ export class LobbyComponent {
     this.activeAction.set('join');
     this.errorMsg.set(null);
 
-    this.http.post<JoinRoomResponse>(`${environment.apiBaseUrl}/rooms/${rid}/join`, { playerName: name })
-      .subscribe({
-        next: res => {
-          this.loading.set(false);
-          this.router.navigate(['/game'], {
-            queryParams: { roomId: rid, playerId: res.playerId },
-          });
-        },
-        error: err => {
-          this.loading.set(false);
-          const status = err.status;
-          if (status === 404) {
-            this.errorMsg.set('Room not found. Please check the Room ID.');
-          } else if (status === 409) {
-            this.errorMsg.set('Room is full (max 4 players).');
-          } else {
-            this.errorMsg.set(err.error?.message ?? 'Failed to join room. Please try again.');
-          }
-        },
-      });
+    this.http.post<JoinRoomResponse>(
+      `${environment.apiBaseUrl}/rooms/${rid}/join`, { playerName: name }
+    ).subscribe({
+      next: res => {
+        this.loading.set(false);
+        this.router.navigate(['/game'], {
+          queryParams: { roomId: rid, playerId: res.playerId },
+        });
+      },
+      error: err => {
+        this.loading.set(false);
+        const status = err.status;
+        if (status === 404) {
+          this.errorMsg.set('Room not found. Please check the Room ID.');
+        } else if (status === 409) {
+          this.errorMsg.set('Room is full (max 4 players).');
+        } else {
+          this.errorMsg.set(err.error?.message ?? 'Failed to join room. Please try again.');
+        }
+      },
+    });
   }
 
   /** 複製 Room ID 到剪貼簿 */

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   players,
@@ -6,6 +6,7 @@ import {
   currentTurnPlayerId,
   localPlayerId,
   connectionStatus,
+  gameRoomSignal,
 } from '../../../core/store/game.store';
 
 /**
@@ -13,6 +14,7 @@ import {
  *
  * 即時顯示所有玩家的手牌數量、備用庫數量，以及目前輪到誰出牌。
  * 數值隨 WebSocket 廣播自動更新（Computed Signals）。
+ * AI 玩家以 🤖 badge 標示。
  */
 @Component({
   selector: 'app-score',
@@ -20,7 +22,13 @@ import {
   imports: [CommonModule],
   template: `
     <div class="score-container">
-      <h2 class="text-lg font-bold text-white mb-3">📊 Scoreboard</h2>
+      <!-- 標題：依模式顯示 -->
+      <h2 class="text-lg font-bold text-white mb-3 flex items-center gap-2">
+        📊 Scoreboard
+        @if (isSoloMode()) {
+          <span class="solo-badge">VS AI</span>
+        }
+      </h2>
 
       <!-- 玩家狀態列表 -->
       <div class="players-list">
@@ -29,22 +37,26 @@ import {
             class="player-row"
             [class.current-turn]="player.id === currentTurnPlayerId()"
             [class.is-me]="player.id === localPlayerId()"
+            [class.is-ai]="player.ai"
           >
-            <!-- 玩家名稱 -->
-            <div class="flex items-center gap-2 flex-1">
+            <!-- 輪次指示 -->
+            <div class="flex items-center gap-2 flex-1 min-w-0">
               @if (player.id === currentTurnPlayerId()) {
-                <span class="text-yellow-400 text-sm">▶</span>
+                <span class="text-yellow-400 text-sm flex-shrink-0">▶</span>
               } @else {
-                <span class="text-slate-600 text-sm">○</span>
+                <span class="text-slate-600 text-sm flex-shrink-0">○</span>
               }
-              <span class="player-name">
-                {{ player.name }}
-                @if (player.id === localPlayerId()) {
-                  <span class="me-badge">You</span>
-                }
-              </span>
-              @if (!player.connected) {
-                <span class="text-red-400 text-xs">(disconnected)</span>
+
+              <!-- 玩家名稱 + badges -->
+              <span class="player-name truncate">{{ player.name }}</span>
+              @if (player.id === localPlayerId()) {
+                <span class="me-badge">You</span>
+              }
+              @if (player.ai) {
+                <span class="ai-badge">🤖 AI</span>
+              }
+              @if (!player.connected && !player.ai) {
+                <span class="text-red-400 text-xs flex-shrink-0">(offline)</span>
               }
             </div>
 
@@ -80,6 +92,10 @@ import {
       @apply bg-slate-800 rounded-xl p-4 flex flex-col gap-2;
     }
 
+    .solo-badge {
+      @apply bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded-full;
+    }
+
     .players-list {
       @apply flex flex-col gap-1;
     }
@@ -97,16 +113,24 @@ import {
       @apply ring-1 ring-blue-400;
     }
 
+    .is-ai {
+      @apply opacity-90;
+    }
+
     .player-name {
       @apply text-white text-sm font-medium;
     }
 
     .me-badge {
-      @apply bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded ml-1;
+      @apply bg-blue-600 text-white text-xs px-1.5 py-0.5 rounded flex-shrink-0;
+    }
+
+    .ai-badge {
+      @apply bg-purple-700 text-purple-200 text-xs px-1.5 py-0.5 rounded flex-shrink-0;
     }
 
     .tile-count {
-      @apply flex flex-col items-center;
+      @apply flex flex-col items-center flex-shrink-0 ml-2;
     }
 
     .count-value {
@@ -137,9 +161,13 @@ export class ScoreComponent {
   readonly localPlayerId = localPlayerId;
   readonly connectionStatus = connectionStatus;
 
+  /** 是否為單人 VS AI 模式（房間內有任何 AI 玩家） */
+  readonly isSoloMode = computed(() =>
+    gameRoomSignal()?.players.some(p => p.ai) ?? false
+  );
+
   connectionClass(): string {
-    const status = this.connectionStatus();
-    switch (status) {
+    switch (this.connectionStatus()) {
       case 'CONNECTED':    return 'bg-green-900 text-green-300';
       case 'CONNECTING':   return 'bg-yellow-900 text-yellow-300';
       case 'DISCONNECTED': return 'bg-red-900 text-red-300';
@@ -147,8 +175,7 @@ export class ScoreComponent {
   }
 
   connectionLabel(): string {
-    const status = this.connectionStatus();
-    switch (status) {
+    switch (this.connectionStatus()) {
       case 'CONNECTED':    return '● Connected';
       case 'CONNECTING':   return '◌ Connecting...';
       case 'DISCONNECTED': return '○ Disconnected';
