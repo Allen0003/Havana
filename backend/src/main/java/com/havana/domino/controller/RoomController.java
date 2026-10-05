@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * REST API：遊戲房間管理。
  *
@@ -93,5 +95,28 @@ public class RoomController {
     public ResponseEntity<GameRoomDTO> getRoom(@PathVariable String roomId) {
         GameRoom room = matchmakingService.getRoom(roomId);
         return ResponseEntity.ok(GameRoomDTO.from(room));
+    }
+
+    /**
+     * 取得指定玩家的個人手牌（僅限本人查詢）。
+     *
+     * <p>廣播 DTO 不含手牌牌面，此端點讓前端在進入遊戲後
+     * 以及每次出牌後取得最新手牌。
+     *
+     * @param roomId   房間 ID
+     * @param playerId 查詢者的玩家 ID
+     * @return 該玩家目前的手牌列表；房間或玩家不存在回 404
+     */
+    @GetMapping("/{roomId}/hand")
+    public ResponseEntity<List<TileDTO>> getHand(
+            @PathVariable String roomId,
+            @RequestParam String playerId) {
+
+        GameRoom room = matchmakingService.getRoom(roomId);
+        Player player = room.findPlayer(playerId);
+        List<TileDTO> hand = player.getHand().stream()
+                .map(TileDTO::from)
+                .toList();
+        return ResponseEntity.ok(hand);
     }
 }
