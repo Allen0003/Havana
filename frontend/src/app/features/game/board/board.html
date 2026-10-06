@@ -1,66 +1,83 @@
 <div class="board-container">
 
-    <!-- ── 標題列 ─────────────────────────────────────── -->
-    <div class="board-header">
-        <h2 class="text-lg font-bold text-white flex items-center gap-2">
-            🎲 Board
-            @if (boardTiles().length > 0) {
-            <span class="text-sm font-normal text-slate-300">
-                ({{ boardTiles().length }} tiles)
-            </span>
-            }
-        </h2>
+  <!-- ── 標題列 ─────────────────────────────────────── -->
+  <div class="board-header">
+    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+      🎲 Board
+      @if (boardTiles().length > 0) {
+        <span class="text-sm font-normal text-slate-300">
+          ({{ boardTiles().length }} tiles)
+        </span>
+      }
+    </h2>
 
-        @if (boardTiles().length > 0) {
-        <div class="ends-row">
-            <div class="end-badge">
-                <span class="end-label">LEFT</span>
-                <span class="end-value">{{ leftEnd() }}</span>
-            </div>
-            <div class="end-badge">
-                <span class="end-label">RIGHT</span>
-                <span class="end-value">{{ rightEnd() }}</span>
-            </div>
+    @if (boardTiles().length > 0) {
+      <div class="ends-row">
+        <div class="end-badge">
+          <span class="end-label">LEFT</span>
+          <span class="end-value">{{ leftEnd() }}</span>
         </div>
+        <div class="end-badge">
+          <span class="end-label">RIGHT</span>
+          <span class="end-value">{{ rightEnd() }}</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- ── Canvas 捲動區域 ────────────────────────────── -->
+  <div class="canvas-scroll">
+
+    @if (boardTiles().length === 0) {
+      <div class="empty-board">
+        <span class="text-slate-500 text-sm">Waiting for the first tile...</span>
+      </div>
+
+    } @else {
+      <div
+        class="tile-canvas"
+        [style.width.px]="lout().cols * CW + 24"
+        [style.height.px]="lout().rows * CH + 24"
+      >
+        @for (p of lout().placed; track p.tile.id) {
+
+          <!-- 牌的絕對定位容器（透過 [style.width.px] 與 [style.height.px] 帶入變數） -->
+          <div
+            class="cell"
+            [style.width.px]="CW"
+            [style.height.px]="CH"
+            [style.left.px]="p.col * CW"
+            [style.top.px]="p.row * CH"
+          >
+            <!-- 牌體 -->
+            <div
+              class="domino"
+              [class.dom-h]="p.orient === 'H'"
+              [class.dom-v]="p.orient === 'V'"
+              [class.dom-double]="p.tile.isDouble"
+              [class.dom-first]="p.isFirst"
+              [class.dom-left-end]="p.isLeft"
+              [class.dom-right-end]="p.isRight"
+              [title]="p.tile.left + '|' + p.tile.right"
+            >
+              <!-- 上/左 半 -->
+              <div class="half">
+                <span class="pip">{{ p.flipped ? p.tile.right : p.tile.left }}</span>
+              </div>
+
+              <!-- 中間分隔線 -->
+              <div class="sep" [class.sep-v]="p.orient === 'V'"></div>
+
+              <!-- 下/右 半 -->
+              <div class="half">
+                <span class="pip">{{ p.flipped ? p.tile.left : p.tile.right }}</span>
+              </div>
+            </div>
+          </div>
+
         }
-    </div>
+      </div>
+    }
 
-    <!-- ── Canvas 捲動區域 ────────────────────────────── -->
-    <div class="canvas-scroll">
-
-        @if (boardTiles().length === 0) {
-        <div class="empty-board">
-            <span class="text-slate-500 text-sm">Waiting for the first tile...</span>
-        </div>
-
-        } @else {
-        <div class="tile-canvas" [style.width.px]="lout().cols * CW + 24" [style.height.px]="lout().rows * CH + 24">
-            @for (p of lout().placed; track p.tile.id) {
-
-            <!-- 牌的絕對定位容器 -->
-            <div class="cell" [style.left.px]="p.col * CW" [style.top.px]="p.row * CH">
-                <!-- 牌體 -->
-                <div class="domino" [class.dom-h]="p.orient === 'H'" [class.dom-v]="p.orient === 'V'"
-                    [class.dom-double]="p.tile.isDouble" [class.dom-first]="p.isFirst" [class.dom-left-end]="p.isLeft"
-                    [class.dom-right-end]="p.isRight" [title]="p.tile.left + '|' + p.tile.right">
-                    <!-- 上/左 半 -->
-                    <div class="half">
-                        <span class="pip">{{ p.flipped ? p.tile.right : p.tile.left }}</span>
-                    </div>
-
-                    <!-- 中間分隔線 -->
-                    <div class="sep" [class.sep-v]="p.orient === 'V'"></div>
-
-                    <!-- 下/右 半 -->
-                    <div class="half">
-                        <span class="pip">{{ p.flipped ? p.tile.left : p.tile.right }}</span>
-                    </div>
-                </div>
-            </div>
-
-            }
-        </div>
-        }
-
-    </div>
+  </div>
 </div>

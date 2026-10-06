@@ -1,130 +1,129 @@
-    .board-container {
-      @apply bg-slate-800 rounded-xl p-4 flex flex-col gap-3;
-      min-height: 180px;
-    }
+/* ── 外框 ─────────────────────────────────────────────── */
+.board-container {
+  @apply bg-slate-800 rounded-xl p-4 flex flex-col gap-3;
+  min-height: 180px;
+}
 
-    .board-header {
-      @apply flex items-center justify-between flex-wrap gap-2;
-    }
+.board-header {
+  @apply flex items-center justify-between flex-wrap gap-2;
+}
 
-    .ends-row {
-      @apply flex gap-3;
-    }
+.ends-row {
+  @apply flex gap-3;
+}
 
-    .end-badge {
-      @apply flex items-center gap-2 bg-slate-700 rounded-lg px-3 py-1;
-    }
+.end-badge {
+  @apply flex items-center gap-2 bg-slate-700 rounded-lg px-3 py-1;
+}
 
-    .end-label {
-      @apply text-xs text-slate-400 font-medium uppercase tracking-wide;
-    }
+.end-label {
+  @apply text-xs text-slate-400 font-medium uppercase tracking-wide;
+}
 
-    .end-value {
-      @apply text-xl font-bold text-yellow-400 leading-none;
-    }
+.end-value {
+  @apply text-xl font-bold text-yellow-400 leading-none;
+}
 
-    /* ── Canvas ───────────────────────────────────────────── */
-    .canvas-scroll {
-      @apply overflow-auto rounded-lg p-3;
-      background: rgba(15, 23, 42, 0.6);  /* slate-950/60 */
-      min-height: 120px;
-    }
+/* ── Canvas ───────────────────────────────────────────── */
+.canvas-scroll {
+  @apply overflow-auto rounded-lg p-3;
+  background: rgba(15, 23, 42, 0.6);  /* slate-950/60 */
+  min-height: 120px;
+}
 
-    .empty-board {
-      @apply flex items-center justify-center py-8;
-    }
+.empty-board {
+  @apply flex items-center justify-center py-8;
+}
 
-    .tile-canvas {
-      position: relative;
-    }
+.tile-canvas {
+  position: relative;
+}
 
-    /* ── 格子容器（絕對定位到格子左上角） ───────────────── */
-    .cell {
-      position: absolute;
-      width:  ${CW}px;
-      height: ${CH}px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+/* ── 格子容器（寬高改由 HTML 帶入變數，這裡只留定位與排版） ── */
+.cell {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-    /* ── 骨牌本體 ─────────────────────────────────────────── */
-    .domino {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #f1f5f9;   /* slate-100 */
-      border: 1.5px solid #94a3b8;  /* slate-400 */
-      border-radius: 4px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
-      font-weight: 700;
-      user-select: none;
-      position: relative;
-    }
+/* ── 骨牌本體 ─────────────────────────────────────────── */
+.domino {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;   /* slate-100 */
+  border: 1.5px solid #94a3b8;  /* slate-400 */
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  font-weight: 700;
+  user-select: none;
+  position: relative;
+}
 
-    /* 水平牌 */
-    .dom-h {
-      flex-direction: row;
-      width:  42px;
-      height: 22px;
-    }
+/* 水平牌 */
+.dom-h {
+  flex-direction: row;
+  width:  42px;
+  height: 22px;
+}
 
-    /* 垂直牌 */
-    .dom-v {
-      flex-direction: column;
-      width:  22px;
-      height: 42px;
-    }
+/* 垂直牌 */
+.dom-v {
+  flex-direction: column;
+  width:  22px;
+  height: 42px;
+}
 
-    /* 對子（spinner）：黃色底 */
-    .dom-double {
-      background: #fef3c7;   /* amber-100 */
-      border-color: #f59e0b; /* amber-400 */
-    }
+/* 對子（spinner）：黃色底 */
+.dom-double {
+  background: #fef3c7;   /* amber-100 */
+  border-color: #f59e0b; /* amber-400 */
+}
 
-    /* 第一張（[9|9]）：橙色+光圈 */
-    .dom-first {
-      background: #fde68a;   /* amber-200 */
-      border-color: #d97706; /* amber-600 */
-      box-shadow: 0 0 0 2px #f59e0b, 0 2px 8px rgba(0,0,0,0.4);
-    }
+/* 第一張（[9|9]）：橙色+光圈 */
+.dom-first {
+  background: #fde68a;   /* amber-200 */
+  border-color: #d97706; /* amber-600 */
+  box-shadow: 0 0 0 2px #f59e0b, 0 2px 8px rgba(0,0,0,0.4);
+}
 
-    /* 桌面左端：藍色光圈 */
-    .dom-left-end {
-      box-shadow: 0 0 0 2px #60a5fa, 0 2px 8px rgba(0,0,0,0.4);
-    }
+/* 桌面左端：藍色光圈 */
+.dom-left-end {
+  box-shadow: 0 0 0 2px #60a5fa, 0 2px 8px rgba(0,0,0,0.4);
+}
 
-    /* 桌面右端：綠色光圈 */
-    .dom-right-end {
-      box-shadow: 0 0 0 2px #34d399, 0 2px 8px rgba(0,0,0,0.4);
-    }
+/* 桌面右端：綠色光圈 */
+.dom-right-end {
+  box-shadow: 0 0 0 2px #34d399, 0 2px 8px rgba(0,0,0,0.4);
+}
 
-    /* ── 點數半格 ─────────────────────────────────────────── */
-    .half {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+/* ── 點數半格 ─────────────────────────────────────────── */
+.half {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-    .pip {
-      font-size: 10px;
-      font-weight: 800;
-      color: #1e293b;   /* slate-800 */
-      line-height: 1;
-    }
+.pip {
+  font-size: 10px;
+  font-weight: 800;
+  color: #1e293b;   /* slate-800 */
+  line-height: 1;
+}
 
-    /* ── 分隔線 ───────────────────────────────────────────── */
-    .sep {
-      background: #94a3b8;  /* slate-400 */
-      /* 水平牌：垂直線 */
-      width:  1.5px;
-      height: 14px;
-      flex-shrink: 0;
-    }
+/* ── 分隔線 ───────────────────────────────────────────── */
+.sep {
+  background: #94a3b8;  /* slate-400 */
+  /* 水平牌：垂直線 */
+  width:  1.5px;
+  height: 14px;
+  flex-shrink: 0;
+}
 
-    .sep-v {
-      /* 垂直牌：水平線 */
-      width:  14px;
-      height: 1.5px;
-    }
+.sep-v {
+  /* 垂直牌：水平線 */
+  width:  14px;
+  height: 1.5px;
+}
