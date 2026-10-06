@@ -1,0 +1,111 @@
+<div class="lobby-page">
+    <!-- Header -->
+    <header class="lobby-header">
+        <span class="text-4xl">🎲</span>
+        <h1 class="text-3xl font-bold text-white">Havana</h1>
+        <p class="text-slate-400 text-sm mt-1">Cuban Dominoes — 4 Players</p>
+    </header>
+
+    <!-- VS AI banner：快速入口 -->
+    <div class="solo-banner">
+        <div class="flex flex-col gap-1 flex-1">
+            <span class="text-white font-bold text-lg">🤖 Play vs AI</span>
+            <span class="text-slate-400 text-sm">
+                Practice against 3 AI opponents — starts instantly!
+            </span>
+        </div>
+        <div class="flex flex-col gap-2 items-stretch sm:items-end">
+            <input class="input w-full sm:w-44" type="text" placeholder="Your name" maxlength="20"
+                [(ngModel)]="soloName" (keydown.enter)="onSolo()" />
+            <button class="btn-solo" (click)="onSolo()" [disabled]="loading() || !soloName.trim()">
+                @if (loading() && activeAction() === 'solo') {
+                <span class="spinner"></span> Starting...
+                } @else {
+                ▶ Start Game
+                }
+            </button>
+        </div>
+    </div>
+
+    <div class="divider-text">— or play with friends —</div>
+
+    <div class="cards-grid">
+
+        <!-- 建立房間 -->
+        <div class="card">
+            <h2 class="card-title">🏠 Create Room</h2>
+            <p class="card-desc">Start a new game and share the Room ID with 3 friends.</p>
+
+            <div class="form-field">
+                <label class="label">Your Name</label>
+                <input class="input" type="text" placeholder="e.g. Alice" maxlength="20" [(ngModel)]="createName"
+                    (keydown.enter)="onCreate()" />
+            </div>
+
+            @if (createdRoomId()) {
+            <div class="room-id-box">
+                <span class="text-slate-400 text-xs uppercase tracking-wider">Room ID</span>
+                <span class="text-white font-mono text-lg font-bold">{{ createdRoomId() }}</span>
+                <button class="btn-copy" (click)="copyRoomId()">
+                    {{ copied() ? '✓ Copied!' : 'Copy' }}
+                </button>
+            </div>
+            }
+
+            <button class="btn-primary" (click)="onCreate()" [disabled]="loading() || !createName.trim()">
+                @if (loading() && activeAction() === 'create') {
+                <span class="spinner"></span> Creating...
+                } @else {
+                Create Room
+                }
+            </button>
+        </div>
+
+        <!-- 加入房間 -->
+        <div class="card">
+            <h2 class="card-title">🚪 Join Room</h2>
+            <p class="card-desc">Enter the Room ID shared by the host and join the game.</p>
+
+            <div class="form-field">
+                <label class="label">Your Name</label>
+                <input class="input" type="text" placeholder="e.g. Bob" maxlength="20" [(ngModel)]="joinName" />
+            </div>
+
+            <div class="form-field">
+                <label class="label">Room ID</label>
+                <input class="input font-mono" type="text" placeholder="Paste Room ID here" [(ngModel)]="joinRoomId"
+                    (keydown.enter)="onJoin()" />
+            </div>
+
+            <button class="btn-primary" (click)="onJoin()"
+                [disabled]="loading() || !joinName.trim() || !joinRoomId.trim()">
+                @if (loading() && activeAction() === 'join') {
+                <span class="spinner"></span> Joining...
+                } @else {
+                Join Room
+                }
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Error message -->
+    @if (errorMsg()) {
+    <div class="error-box">
+        ⚠️ {{ errorMsg() }}
+    </div>
+    }
+
+    <!-- How to play -->
+    <div class="rules-box">
+        <h3 class="text-white font-semibold mb-2">📖 How to Play</h3>
+        <ul class="text-slate-400 text-sm space-y-1 list-disc list-inside">
+            <li>4 players, double-nine set (55 tiles)</li>
+            <li>Each player gets 10 tiles; 15 remain in the Boneyard</li>
+            <li>The player holding [9|9] goes first with that tile</li>
+            <li>Match the left or right end of the board</li>
+            <li>Pass (Knock) when no tile can be played</li>
+            <li>First to empty their hand wins; Trancado if nobody can play</li>
+        </ul>
+    </div>
+</div>

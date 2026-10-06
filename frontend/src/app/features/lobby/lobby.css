@@ -1,0 +1,84 @@
+   .lobby-page {
+      @apply min-h-screen bg-slate-900 flex flex-col items-center px-4 py-10 gap-8;
+    }
+
+    .lobby-header {
+      @apply flex flex-col items-center gap-1;
+    }
+
+    .solo-banner {
+      @apply flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4
+             bg-gradient-to-r from-purple-900 to-slate-800
+             border border-purple-700 rounded-2xl p-5
+             w-full max-w-2xl;
+    }
+
+    .btn-solo {
+      @apply bg-purple-600 hover:bg-purple-500 disabled:bg-slate-600 disabled:cursor-not-allowed
+             text-white font-bold px-5 py-2 rounded-xl
+             transition-colors flex items-center justify-center gap-2 whitespace-nowrap;
+    }
+
+    .divider-text {
+      @apply text-slate-500 text-sm;
+    }
+
+    .cards-grid {
+      @apply grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl;
+    }
+
+    .card {
+      @apply bg-slate-800 rounded-2xl p-6 flex flex-col gap-4;
+    }
+
+    .card-title {
+      @apply text-white text-xl font-bold;
+    }
+
+    .card-desc {
+      @apply text-slate-400 text-sm;
+    }
+
+    .form-field {
+      @apply flex flex-col gap-1;
+    }
+
+    .label {
+      @apply text-slate-400 text-xs uppercase tracking-wider font-medium;
+    }
+
+    .input {
+      @apply bg-slate-700 border border-slate-600 rounded-lg px-3 py-2
+             text-white placeholder-slate-500 text-sm
+             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+             transition-all;
+    }
+
+    .btn-primary {
+      @apply bg-blue-600 hover:bg-blue-500 disabled:bg-slate-600 disabled:cursor-not-allowed
+             text-white font-semibold px-4 py-2.5 rounded-xl
+             transition-colors flex items-center justify-center gap-2;
+    }
+
+    .room-id-box {
+      @apply bg-slate-700 rounded-lg px-4 py-3 flex items-center
+             justify-between gap-3 border border-slate-600;
+    }
+
+    .btn-copy {
+      @apply bg-slate-600 hover:bg-slate-500 text-white text-xs px-2 py-1 rounded transition-colors;
+    }
+
+    .error-box {
+      @apply bg-red-900 border border-red-700 text-red-200
+             px-4 py-3 rounded-xl text-sm max-w-2xl w-full;
+    }
+
+    .rules-box {
+      @apply bg-slate-800 rounded-2xl p-6 w-full max-w-2xl;
+    }
+
+    .spinner {
+      @apply inline-block w-4 h-4 border-2 border-white border-t-transparent
+             rounded-full animate-spin;
+    }
