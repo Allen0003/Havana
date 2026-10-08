@@ -10,14 +10,14 @@ import com.havana.domino.service.AiPlayerService;
 import com.havana.domino.service.GameEngineService;
 import com.havana.domino.service.MatchmakingService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import java.util.Map;
-import java.util.Optional;
+
 /**
  * WebSocket 遊戲操作控制器。
  *
@@ -30,22 +30,33 @@ import java.util.Optional;
  * 包含勝利與死局（Trancado）判定。
  */
 @Controller
-@RequiredArgsConstructor
-@Slf4j
 public class GameWebSocketController {
 
-    private final GameEngineService gameEngineService;
-    private final MatchmakingService matchmakingService;
-    private final SimpMessagingTemplate messagingTemplate;
-    private final AiPlayerService aiPlayerService;
+    private static final Logger log = LoggerFactory.getLogger(GameWebSocketController.class);
 
     /** AI 連鎖行動之間的短暫延遲（毫秒），讓前端有時間渲染更新 */
     private static final long AI_MOVE_DELAY_MS = 600;
 
+    private final GameEngineService      gameEngineService;
+    private final MatchmakingService     matchmakingService;
+    private final SimpMessagingTemplate  messagingTemplate;
+    private final AiPlayerService        aiPlayerService;
+
+    public GameWebSocketController(GameEngineService gameEngineService,
+                                   MatchmakingService matchmakingService,
+                                   SimpMessagingTemplate messagingTemplate,
+                                   AiPlayerService aiPlayerService) {
+        this.gameEngineService  = gameEngineService;
+        this.matchmakingService = matchmakingService;
+        this.messagingTemplate  = messagingTemplate;
+        this.aiPlayerService    = aiPlayerService;
+    }
+
+    // ── WebSocket 訊息處理 ────────────────────────────────────────────────────
+
     /**
      * 處理出牌請求。
-     * <p>M3-1 + M3-3：驗證並執行出牌，檢查勝利/死局，廣播更新。</p>
-     * <p>若輪到 AI 玩家，自動連鎖執行直到輪回人類或遊戲結束。</p>
+     * 人類出牌後若輪到 AI，自動連鎖執行直到輪回人類或遊戲結束。
      */
     @MessageMapping("/game.play")
     public void playTile(@Valid PlayMoveRequest request) {
@@ -60,16 +71,15 @@ public class GameWebSocketController {
                 return;
             }
 
-            GameRoom updatedRoom = gameEngineService.playTile(
+            GameRoom updated = gameEngineService.playTile(
                     room, request.playerId(), request.tileId(), request.targetEnd());
 
-            updatedRoom = resolveEndCondition(updatedRoom);
-            broadcastRoomUpdate(updatedRoom, updatedRoom.isTrancado()
-                    ? gameEngineService.calculateTrancadoScores(updatedRoom) : null);
+            updated = resolveEndCondition(updated);
+            broadcastRoomUpdate(updated,
+                    updated.isTrancado() ? gameEngineService.calculateTrancadoScores(updated) : null);
 
-            // 若遊戲繼續且輪到 AI，觸發 AI 連鎖行動
-            if (updatedRoom.getStatus() == GameStatus.IN_PROGRESS) {
-                triggerAiChain(updatedRoom);
+            if (updated.getStatus() == GameStatus.IN_PROGRESS) {
+                triggerAiChain(updated);
             }
 
         } catch (IllegalArgumentException | IllegalStateException e) {
@@ -83,8 +93,7 @@ public class GameWebSocketController {
 
     /**
      * 處理過牌請求。
-     * <p>M3-2 + M3-3：驗證並執行過牌，檢查死局，廣播更新。</p>
-     * <p>若輪到 AI 玩家，自動連鎖執行直到輪回人類或遊戲結束。</p>
+     * 人類過牌後若輪到 AI，自動連鎖執行直到輪回人類或遊戲結束。
      */
     @MessageMapping("/game.pass")
     public void passTurn(@Valid PassMoveRequest request) {
@@ -98,14 +107,14 @@ public class GameWebSocketController {
                 return;
             }
 
-            GameRoom updatedRoom = gameEngineService.passTurn(room, request.playerId());
+            GameRoom updated = gameEngineService.passTurn(room, request.playerId());
 
-            updatedRoom = resolveEndCondition(updatedRoom);
-            broadcastRoomUpdate(updatedRoom, updatedRoom.isTrancado()
-                    ? gameEngineService.calculateTrancadoScores(updatedRoom) : null);
+            updated = resolveEndCondition(updated);
+            broadcastRoomUpdate(updated,
+                    updated.isTrancado() ? gameEngineService.calculateTrancadoScores(updated) : null);
 
-            if (updatedRoom.getStatus() == GameStatus.IN_PROGRESS) {
-                triggerAiChain(updatedRoom);
+            if (updated.getStatus() == GameStatus.IN_PROGRESS) {
+                triggerAiChain(updated);
             }
 
         } catch (IllegalStateException | IllegalArgumentException e) {
@@ -119,12 +128,8 @@ public class GameWebSocketController {
 
     // ── 私有輔助方法 ──────────────────────────────────────────────────────────
 
-    /**
-     * 檢查勝利和死局，更新 GameRoom 狀態。
-     * 回傳更新後的 room（若已結束則 status = FINISHED）。
-     */
+    /** 檢查勝利和死局，更新 GameRoom 狀態後回傳。 */
     private GameRoom resolveEndCondition(GameRoom room) {
-        // 檢查勝利
         gameEngineService.checkWinner(room).ifPresent(winner -> {
             room.setWinnerId(winner.getId());
             room.setStatus(GameStatus.FINISHED);
@@ -135,7 +140,6 @@ public class GameWebSocketController {
             return room;
         }
 
-        // 檢查死局
         if (gameEngineService.isTrancado(room)) {
             Map<String, Integer> scores = gameEngineService.calculateTrancadoScores(room);
             room.setTrancado(true);
@@ -152,9 +156,7 @@ public class GameWebSocketController {
 
     /**
      * AI 連鎖行動：若目前輪到 AI 玩家，連續執行直到輪回人類或遊戲結束。
-     * 每次 AI 行動後都廣播一次更新，並加入短暫延遲讓前端有時間渲染。
-     *
-     * <p>防死循環保護：最多連續執行 players.size() 次，避免全 AI 房間無限迴圈。</p>
+     * 防死循環保護：最多連續執行 players.size() 次。
      */
     private void triggerAiChain(GameRoom room) {
         int maxChain = room.getPlayers().size();
@@ -163,9 +165,8 @@ public class GameWebSocketController {
             if (room.getStatus() != GameStatus.IN_PROGRESS) break;
 
             Player current = room.currentPlayer();
-            if (!current.isAi()) break; // 輪到人類，停止
+            if (!current.isAi()) break;
 
-            // AI 行動前短暫等待，讓前端感受到流程
             try {
                 Thread.sleep(AI_MOVE_DELAY_MS);
             } catch (InterruptedException e) {
@@ -178,7 +179,6 @@ public class GameWebSocketController {
                 room = aiPlayerService.executeAction(room, current.getId());
                 room = resolveEndCondition(room);
 
-                // 每次 AI 行動後立即廣播
                 Map<String, Integer> scores = room.isTrancado()
                         ? gameEngineService.calculateTrancadoScores(room) : null;
                 broadcastRoomUpdate(room, scores);
@@ -191,9 +191,7 @@ public class GameWebSocketController {
         }
     }
 
-    /**
-     * 廣播房間狀態更新至所有訂閱者。
-     */
+    /** 廣播房間狀態更新至所有訂閱者。 */
     private void broadcastRoomUpdate(GameRoom room, Map<String, Integer> trancadoScores) {
         GameRoomDTO dto = GameRoomDTO.from(room, trancadoScores);
         String topic = "/topic/room/" + room.getRoomId();
@@ -201,9 +199,7 @@ public class GameWebSocketController {
         log.debug("廣播房間更新至 {}", topic);
     }
 
-    /**
-     * 發送錯誤訊息至特定房間訂閱者。
-     */
+    /** 發送錯誤訊息至特定房間訂閱者。 */
     private void sendError(String roomId, String errorMessage) {
         Map<String, String> error = Map.of(
                 "error", "OPERATION_FAILED",

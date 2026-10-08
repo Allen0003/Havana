@@ -5,7 +5,6 @@ import com.havana.domino.model.GameRoom;
 import com.havana.domino.model.Player;
 import com.havana.domino.service.MatchmakingService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,16 +16,21 @@ import java.util.List;
  *
  * <pre>
  * POST  /api/rooms               建立房間
+ * POST  /api/rooms/solo          建立單人 VS AI 房間
  * POST  /api/rooms/{roomId}/join 加入房間
  * GET   /api/rooms/{roomId}      查詢房間狀態
+ * GET   /api/rooms/{roomId}/hand 查詢個人手牌
  * </pre>
  */
 @RestController
 @RequestMapping("/api/rooms")
-@RequiredArgsConstructor
 public class RoomController {
 
     private final MatchmakingService matchmakingService;
+
+    public RoomController(MatchmakingService matchmakingService) {
+        this.matchmakingService = matchmakingService;
+    }
 
     /**
      * 建立單人對戰房間（1 人 + 3 AI），立即開始遊戲。
@@ -40,7 +44,7 @@ public class RoomController {
         String hostPlayerId = room.getPlayers().stream()
                 .filter(p -> !p.isAi())
                 .findFirst()
-                .map(p -> p.getId())
+                .map(Player::getId)
                 .orElseThrow();
 
         return ResponseEntity
@@ -75,8 +79,6 @@ public class RoomController {
             @Valid @RequestBody JoinRoomRequest request) {
 
         GameRoom room = matchmakingService.joinRoom(roomId, request.playerName());
-
-        // 找到剛加入的玩家（最後一位）
         String newPlayerId = room.getPlayers()
                 .get(room.getPlayers().size() - 1).getId();
 
@@ -100,12 +102,9 @@ public class RoomController {
     /**
      * 取得指定玩家的個人手牌（僅限本人查詢）。
      *
-     * <p>廣播 DTO 不含手牌牌面，此端點讓前端在進入遊戲後
-     * 以及每次出牌後取得最新手牌。
-     *
      * @param roomId   房間 ID
      * @param playerId 查詢者的玩家 ID
-     * @return 該玩家目前的手牌列表；房間或玩家不存在回 404
+     * @return 該玩家目前的手牌列表
      */
     @GetMapping("/{roomId}/hand")
     public ResponseEntity<List<TileDTO>> getHand(

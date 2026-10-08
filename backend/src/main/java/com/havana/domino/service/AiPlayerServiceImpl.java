@@ -5,8 +5,8 @@ import com.havana.domino.model.BoardEnd;
 import com.havana.domino.model.GameRoom;
 import com.havana.domino.model.Player;
 import com.havana.domino.model.Tile;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -30,11 +30,15 @@ import java.util.Optional;
  * </ol>
  */
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class AiPlayerServiceImpl implements AiPlayerService {
 
+    private static final Logger log = LoggerFactory.getLogger(AiPlayerServiceImpl.class);
+
     private final GameEngineService gameEngineService;
+
+    public AiPlayerServiceImpl(GameEngineService gameEngineService) {
+        this.gameEngineService = gameEngineService;
+    }
 
     // ── selectMove() ─────────────────────────────────────────────────────────
 
@@ -54,7 +58,6 @@ public class AiPlayerServiceImpl implements AiPlayerService {
         int leftEnd  = board.getLeftEnd();
         int rightEnd = board.getRightEnd();
 
-        // 收集所有合法出牌候選（牌 + 目標端）
         record Candidate(Tile tile, BoardEnd end) {}
 
         List<Candidate> candidates = hand.stream()
@@ -64,7 +67,6 @@ public class AiPlayerServiceImpl implements AiPlayerService {
                     if (tile.canMatch(rightEnd)) sb.accept(new Candidate(tile, BoardEnd.RIGHT));
                     return sb.build();
                 })
-                // 去重：同一張牌對子（leftEnd == rightEnd）只保留 RIGHT
                 .filter(c -> !(c.tile().isDouble()
                               && leftEnd == rightEnd
                               && c.end() == BoardEnd.LEFT))
@@ -74,10 +76,6 @@ public class AiPlayerServiceImpl implements AiPlayerService {
             return Optional.empty();
         }
 
-        // 策略排序：
-        //   1. 對子優先（isDouble() desc）
-        //   2. 點數高的牌優先（totalPips() desc）
-        //   3. RIGHT 端優先
         Candidate best = candidates.stream()
                 .max(Comparator
                         .comparingInt((Candidate c) -> c.tile().isDouble() ? 1 : 0)

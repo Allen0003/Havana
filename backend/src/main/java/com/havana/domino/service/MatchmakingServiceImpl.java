@@ -6,7 +6,6 @@ import com.havana.domino.model.GameRoom;
 import com.havana.domino.model.GameStatus;
 import com.havana.domino.model.Player;
 import com.havana.domino.repository.GameRoomRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -20,7 +19,6 @@ import java.util.UUID;
  * joinRoom 的「讀取 → 修改 → 寫入」序列以 synchronized(room) 確保同一房間無競態。
  */
 @Service
-@RequiredArgsConstructor
 public class MatchmakingServiceImpl implements MatchmakingService {
 
     private static final int MAX_PLAYERS = 4;
@@ -28,21 +26,24 @@ public class MatchmakingServiceImpl implements MatchmakingService {
     private final GameRoomRepository roomRepository;
     private final GameEngineService  gameEngine;
 
+    public MatchmakingServiceImpl(GameRoomRepository roomRepository, GameEngineService gameEngine) {
+        this.roomRepository = roomRepository;
+        this.gameEngine     = gameEngine;
+    }
+
     // ── createSoloRoom() ─────────────────────────────────────────────────────
 
     @Override
     public GameRoom createSoloRoom(String hostName) {
-        String roomId  = UUID.randomUUID().toString();
-        String hostId  = UUID.randomUUID().toString();
+        String roomId = UUID.randomUUID().toString();
+        String hostId = UUID.randomUUID().toString();
 
-        // 人類玩家（房主）
         Player host = Player.builder()
                 .id(hostId)
                 .name(hostName)
                 .ai(false)
                 .build();
 
-        // 3 個 AI 玩家
         Player ai1 = Player.builder()
                 .id(UUID.randomUUID().toString())
                 .name("AI-Havana")
@@ -65,7 +66,6 @@ public class MatchmakingServiceImpl implements MatchmakingService {
                 .status(GameStatus.WAITING)
                 .build();
 
-        // 直接 initGame（不需等待加入流程）
         gameEngine.initGame(room);
         return roomRepository.save(room);
     }
@@ -99,7 +99,6 @@ public class MatchmakingServiceImpl implements MatchmakingService {
         GameRoom room = getRoom(roomId);
 
         synchronized (room) {
-            // 再次確認狀態（防止並發下超出限制）
             if (room.getPlayers().size() >= MAX_PLAYERS) {
                 throw new RoomFullException(roomId);
             }
@@ -114,7 +113,6 @@ public class MatchmakingServiceImpl implements MatchmakingService {
 
             room.getPlayers().add(newPlayer);
 
-            // 第 4 位玩家加入 → 自動開始遊戲
             if (room.getPlayers().size() == MAX_PLAYERS) {
                 gameEngine.initGame(room);
             }
