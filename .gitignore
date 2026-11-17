@@ -44,3 +44,8 @@ secrets/
 # ─── Logs ─────────────────────────────────────────────────────────────────────
 *.log
 logs/
+
+
+# Gemini API credentials
+gemini.properties
+
