@@ -35,4 +35,21 @@ class ContextBuilderTest {
         assertThat(context)
                 .contains("Havana Project Rules");
     }
+
+
+    @Test
+    void shouldReadRealHavanaSteering() throws Exception {
+        Path steeringPath = Path.of("..", ".kiro", "steering")
+                .toAbsolutePath()
+                .normalize();
+
+        ContextBuilder builder = new ContextBuilder(steeringPath);
+
+        String context = builder.buildContext();
+
+        assertThat(context)
+                .isNotBlank()
+                .contains("Havana");
+    }
+
 }
